@@ -7,10 +7,10 @@ export function render(element, container) {
 
   const isProperty = key => key !== 'children';
 
-  Object.keys(element.props).filter(isProperty).forEach(prop => {
+  Object.keys(element.props).filter(isProperty).forEach(name => {
     dom[name] = element.props[name];
   });
-  element.props.children(child => {
+  element.props.children.forEach(child => {
     render(child, dom);
   });
   container.appendChild(dom);

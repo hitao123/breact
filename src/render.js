@@ -13,11 +13,11 @@ export function render(element, container) {
 
     Object.keys(element.props)
         .filter(isProperty)
-        .forEach(prop => {
+        .forEach(name => {
             dom[name] =  element.props[name];
         });
 
-    element.props.children(child => {
+    element.props.children.forEach(child => {
         render(child, dom);
     });
     

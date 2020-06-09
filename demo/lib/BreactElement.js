@@ -1,12 +1,9 @@
 const TEXT_ELEMENT = 'TEXT_ELEMENT';
 export function createElement(type, props, ...children) {
-  console.log(...children);
   return {
     type,
     props: { ...props,
-      children: children.map(child => {
-        typeof child === 'object' ? child : createTextElement(child);
-      })
+      children: children.map(child => typeof child === 'object' ? child : createTextElement(child))
     }
   };
 }

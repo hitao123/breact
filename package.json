@@ -1,0 +1,32 @@
+{
+  "name": "breact",
+  "version": "1.0.0",
+  "description": "implement the react",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "rimraf demo/lib && babel src -d demo/lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hitao123/breact.git"
+  },
+  "keywords": [
+    "react",
+    "breact"
+  ],
+  "author": "Billow",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hitao123/breact/issues"
+  },
+  "homepage": "https://github.com/hitao123/breact#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.10.1",
+    "@babel/core": "^7.10.2",
+    "@babel/plugin-syntax-jsx": "^7.10.1",
+    "@babel/preset-react": "^7.10.1"
+  },
+  "dependencies": {
+    "rimraf": "^3.0.2"
+  }
+}

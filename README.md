@@ -12,12 +12,11 @@
  - [x] rende
  - [] Fiber
  - [] Render and commit
- - [] 
  - [] function componnet
  - [] hooks
  - [] npm publish
 
-## 使用
+## using
 
 ```bash
     npm i

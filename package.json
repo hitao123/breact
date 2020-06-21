@@ -4,6 +4,8 @@
   "description": "implement the react",
   "main": "src/index.js",
   "scripts": {
+    "dev": "snowpack dev",
+    "snowpack:build": "snowpack build",
     "build": "rimraf demo/lib && babel src -d demo/lib"
   },
   "repository": {
@@ -26,6 +28,7 @@
     "@babel/plugin-syntax-jsx": "^7.10.1",
     "@babel/preset-react": "^7.10.1",
     "eslint": "^7.2.0",
-    "rimraf": "^3.0.2"
+    "rimraf": "^3.0.2",
+    "snowpack": "^2.4.0"
   }
 }

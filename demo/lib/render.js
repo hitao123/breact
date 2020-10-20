@@ -1,7 +1,9 @@
 let nextUnitWork = null;
-let fiberRoot = null;
+let wipRoot = null;
 let currentRoot = null;
 let deletions = null;
+let wipFiber = null;
+let hookIndex = null;
 
 const isEvent = key => key.startsWith('on');
 
@@ -12,7 +14,7 @@ const isNew = (prev, next) => key => prev[key] !== next[key];
 const isGone = (prev, next) => key => !(key in next);
 
 export function render(element, container) {
-  fiberRoot = {
+  wipRoot = {
     dom: container,
     props: {
       children: [element]
@@ -20,7 +22,7 @@ export function render(element, container) {
     alternate: currentRoot
   };
   deletions = [];
-  nextUnitWork = fiberRoot;
+  nextUnitWork = wipRoot;
 }
 export function updateDom(dom, prevProps, nextProps) {
   // remove old event listeners
@@ -49,8 +51,20 @@ export function createDom(fiber) {
   });
   return dom;
 }
-export function workLoop() {
-  nextUnitWork = performUnitOfWork(nextUnitWork);
+export function workLoop(deadline) {
+  let shouldYield = false;
+
+  while (nextUnitWork && !shouldYield) {
+    nextUnitWork = performUnitOfWork(nextUnitWork);
+    shouldYield = deadline.timeRemaining() < 1;
+  }
+
+  console.log(nextUnitWork, '??', wipRoot);
+
+  if (!nextUnitWork && wipRoot) {
+    commitRoot();
+  }
+
   requestIdleCallback(workLoop);
 }
 export function performUnitOfWork(fiber) {
@@ -102,8 +116,8 @@ export function performUnitOfWork(fiber) {
 }
 export function commitRoot() {
   deletions.forEach(commitWork);
-  commitWork(fiberRoot.child);
-  fiberRoot = null;
+  commitWork(wipRoot.child);
+  wipRoot = null;
 }
 export function commitDeletion(fiber, domParent) {
   if (fiber.dom) {
@@ -137,6 +151,9 @@ export function commitWork(fiber) {
   commitWork(fiber.sibling);
 }
 export function updateFunctionComponent(fiber) {
+  wipFiber = fiber;
+  hookIndex = 0;
+  wipFiber.hooks = [];
   const children = [fiber.type(fiber.props)];
   reconcileChildren(fiber, children);
 }
@@ -147,23 +164,23 @@ export function updateHostComponent(fiber) {
   }
 
   if (fiber.parent) {
-    fiber.parent.dom.appendChild(fiber.dom);
+    fiber.parent.dom && fiber.parent.dom.appendChild(fiber.dom);
   }
 
   const elements = fiber.props.children;
   reconcileChildren(fiber, elements);
 }
-export function reconcileChildren(fiberRoot, elements) {
+export function reconcileChildren(wipRoot, elements) {
   let index = 0;
   let prevSibling = null;
-  let oldFiber = fiberRoot.alternate && fiberRoot.alternate.child;
+  let oldFiber = wipRoot.alternate && wipRoot.alternate.child;
 
   while (index < elements.length || oldFiber != null) {
     const element = elements[index];
     let newFiber = null; // compare old fiber to element
     // 1. 如果两个 fiber 类型相同，保持 dom node 更新新 props
     // 2. 如果类型不同，有一个新元素，需要创建一个新节点
-    // 3. 如果类型不同，存在一个一个老的fiber节点，需要移除
+    // 3. 如果类型不同，存在老的fiber节点，需要移除
     // react 使用 key 可以更好的回收， 也更容易知道节点的摆放位置
 
     const sameType = oldFiber && element && element.type == oldFiber.type;
@@ -174,7 +191,7 @@ export function reconcileChildren(fiberRoot, elements) {
         type: oldFiber.type,
         props: element.props,
         dom: oldFiber.dom,
-        parent: fiberRoot,
+        parent: wipRoot,
         alternate: oldFiber,
         effectTag: "UPDATE"
       };
@@ -183,10 +200,10 @@ export function reconcileChildren(fiberRoot, elements) {
     if (element && !sameType) {
       // add this node
       newFiber = {
-        type: oldFiber.type,
+        type: element.type,
         props: element.props,
         dom: null,
-        parent: fiberRoot,
+        parent: wipRoot,
         alternate: null,
         effectTag: "PLACEMENT"
       };
@@ -199,7 +216,7 @@ export function reconcileChildren(fiberRoot, elements) {
     }
 
     if (index === 0) {
-      fiberRoot.child = newFiber;
+      wipRoot.child = newFiber;
     } else if (element) {
       prevSibling.sibling = newFiber;
     }
@@ -207,8 +224,41 @@ export function reconcileChildren(fiberRoot, elements) {
     prevSibling = newFiber;
     index++;
   }
+}
+export function useState(initial) {
+  const oldHook = wipFiber.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks[hookIndex];
+  const hook = {
+    state: oldHook ? oldHook.state : initial,
+    queue: []
+  };
+  const actions = oldHook ? oldHook.queue : [];
+  actions.forEach(action => {
+    hook.state = action(hook.state);
+  });
+
+  const setState = action => {
+    hook.queue.push(action);
+    wipRoot = {
+      dom: currentRoot.dom,
+      props: currentRoot.props,
+      alternate: currentRoot
+    };
+    nextUnitWork = wipRoot;
+    deletions = [];
+  };
+
+  wipFiber.hooks.push(hook);
+  hookIndex++;
+  return [hook.state, setState];
 } // https://developer.mozilla.org/zh-CN/docs/Web/API/Window/requestIdleCallback
 // https://caniuse.com/#search=requestIdleCallback
-// 类似 setInterval
+// 在浏览器的空闲时段内调用的函数排队。这使开发者能够在主事件循环上执行后台和低优先级工作，
+// 而不会影响延迟关键事件，如动画和输入响应。函数一般会按先进先调用的顺序执行，然而，
+// 如果回调函数指定了执行超时时间timeout，则有可能为了在超时前执行函数而打乱执行顺序
+// requestIdleCallback(callback)  callback 会接受一个 IdleDeadline 参数
+// IdleDeadline.timeRemaining()
+// 并且是浮点类型的数值，它用来表示当前闲置周期的预估剩余毫秒数。如果idle period已经结束，
+// 则它的值是0。你的回调函数(传给requestIdleCallback的函数)可以重复的访问这个属性用来判断
+// 当前线程的闲置时间是否可以在结束前执行更多的任务。 timeRemaining
 
 requestIdleCallback(workLoop);

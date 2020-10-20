@@ -1,6 +1,5 @@
 import { createElement } from './BreactElement.js';
-import { render } from './render.js';
-import { useState } from './hooks.js';
+import { render, useState } from './render.js';
 export const Breact = {
   createElement,
   render,
@@ -9,8 +8,13 @@ export const Breact = {
 
 /** @jsx Breact.createElement */
 
-const element = Breact.createElement("div", {
-  className: "hello-breact"
-}, Breact.createElement("h1", null, "hello"), Breact.createElement("div", null, "Breact !!!!"));
+function Counter() {
+  const [state, setState] = useState(1);
+  return Breact.createElement("h1", {
+    onClick: () => setState(c => c + 1)
+  }, "Count: ", state);
+}
+
+const element = Breact.createElement(Counter, null);
 const container = document.getElementById("app");
 Breact.render(element, container);

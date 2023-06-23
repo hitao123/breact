@@ -14,9 +14,13 @@ export default Breact;
 
 // test-code will be remove when this lib published in npm
 /** @jsx Breact.createElement */
-const element = (<div className="hello-breact">
-    <div>hello</div>
-    <div>Breact !!!!</div>
+const element = (
+<div className="hello-breact">
+    <h1>hello Breact !!!!</h1>
+    <h2>
+        <p>this is p</p>
+        <a href="https://openai.com" alt="open">link</a>
+    </h2>
 </div>);
 
 const container = document.getElementById("app")

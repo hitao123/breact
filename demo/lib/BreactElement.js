@@ -1,6 +1,6 @@
 const TEXT_ELEMENT = 'TEXT_ELEMENT';
 export function createElement(type, props, ...children) {
-  console.log(...children);
+  // console.log(...children)
   return {
     type,
     props: { ...props,
@@ -16,4 +16,19 @@ export function createTextElement(text) {
       children: []
     }
   };
+}
+/**
+ * 
+ * @param {*} fiber { type: '', props: {} }
+ */
+
+export function createDom(fiber) {
+  const dom = fiber.type === TEXT_ELEMENT ? document.createTextNode('') : document.createElement(fiber.type);
+
+  const isProperty = key => key != 'children';
+
+  Object.keys(fiber.props).filter(isProperty).forEach(name => {
+    dom[name] = fiber.props[name];
+  });
+  return dom;
 }

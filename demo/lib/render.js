@@ -3,6 +3,8 @@ let nextUnitOfWork = null;
 let wipRoot = null;
 let currentRoot = null;
 let deletions = [];
+let hookIndex = null;
+let wipFiber = null;
 
 function commitDeletion(fiber, domParent) {
   if (fiber.dom) {
@@ -102,9 +104,13 @@ function reconcileChildren(wipFiber, elements) {
       deletions.push(oldFiber);
     }
 
+    if (oldFiber) {
+      oldFiber = oldFiber.sibling;
+    }
+
     if (index === 0) {
       wipFiber.child = newFiber;
-    } else {
+    } else if (element) {
       prevSibling.sibling = newFiber;
     }
 
@@ -114,6 +120,9 @@ function reconcileChildren(wipFiber, elements) {
 }
 
 function updateFunctionComponent(fiber) {
+  wipFiber = fiber;
+  hookIndex = 0;
+  wipFiber.hooks = [];
   const children = [fiber.type(fiber.props)];
   console.log(fiber, '??===++', children);
   reconcileChildren(fiber, children);
@@ -125,6 +134,33 @@ function updateHostComponent(fiber) {
   }
 
   reconcileChildren(fiber, fiber.props.children);
+}
+
+export function useState(initial) {
+  const oldHook = wipFiber.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks[hookIndex];
+  const hook = {
+    state: oldHook ? oldHook.state : initial,
+    queue: []
+  };
+  const actions = oldHook ? oldHook.queue : [];
+  actions.forEach(action => {
+    hook.state = action(hook.state);
+  });
+
+  const setState = action => {
+    hook.queue.push(action);
+    wipRoot = {
+      dom: currentRoot.dom,
+      props: currentRoot.props,
+      alternate: currentRoot
+    };
+    nextUnitOfWork = wipRoot;
+    deletions = [];
+  };
+
+  wipFiber.hooks.push(hook);
+  hookIndex++;
+  return [hook.state, setState];
 }
 
 function performUnitOfWork(fiber) {

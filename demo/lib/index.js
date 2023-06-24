@@ -8,13 +8,20 @@ export const Breact = {
 
 /** @jsx Breact.createElement */
 
-function Counter() {
-  const [state, setState] = useState(1);
-  return Breact.createElement("h1", {
-    onClick: () => setState(c => c + 1)
-  }, "Count: ", state);
+function App(props) {
+  const [count, setCount] = useState(1);
+  return Breact.createElement("div", {
+    className: "hello-breact"
+  }, Breact.createElement("h1", null, props.name), Breact.createElement("h2", null, Breact.createElement("p", null, "this is p"), Breact.createElement("a", {
+    href: "https://openai.com",
+    alt: "open"
+  }, "link")), Breact.createElement("button", {
+    onClick: () => setCount(c => c + 1)
+  }, "Count: ", count));
 }
 
-const element = Breact.createElement(Counter, null);
+const element = Breact.createElement(App, {
+  name: "hello Breact!!"
+});
 const container = document.getElementById("app");
 Breact.render(element, container);

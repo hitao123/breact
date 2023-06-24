@@ -1,5 +1,5 @@
-import {createElement} from './BreactElement.js'
-import {render, useState} from './render.js'
+import { createElement } from './BreactElement.js'
+import { render, useState } from './render.js'
 
 export const Breact = {
     createElement,
@@ -10,15 +10,19 @@ export const Breact = {
 
 // test-code will be remove when this lib published in npm
 /** @jsx Breact.createElement */
-function Counter() {
-    const [state, setState] = useState(1)
-    return (
-      <h1 onClick={() => setState(c => c + 1)}>
-        Count: {state}
-      </h1>
-    )
-}
+function App(props) {
 
-const element = <Counter />
+    const [count, setCount] = useState(1)
+    return <div className="hello-breact">
+        <h1>{ props.name }</h1>
+        <h2>
+            <p>this is p</p>
+            <a href="https://openai.com" alt="open">link</a>
+        </h2>
+        <button onClick={() => setCount(c => c + 1)}>Count: {count}</button>
+    </div>
+}
+const element = <App name="hello Breact!!" />;
+
 const container = document.getElementById("app")
 Breact.render(element, container)

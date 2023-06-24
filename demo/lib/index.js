@@ -10,11 +10,19 @@ export default Breact; // test-code will be remove when this lib published in np
 
 /** @jsx Breact.createElement */
 
-const element = Breact.createElement("div", {
-  className: "hello-breact"
-}, Breact.createElement("h1", null, "hello Breact !!!!"), Breact.createElement("h2", null, Breact.createElement("p", null, "this is p"), Breact.createElement("a", {
-  href: "https://openai.com",
-  alt: "open"
-}, "link")));
+function App(props) {
+  return Breact.createElement("div", {
+    className: "hello-breact"
+  }, Breact.createElement("h1", null, props.name), Breact.createElement("h2", null, Breact.createElement("p", null, "this is p"), Breact.createElement("a", {
+    href: "https://openai.com",
+    alt: "open"
+  }, "link")), Breact.createElement("button", {
+    onClick: () => console.log('click')
+  }, "Click"));
+}
+
+const element = Breact.createElement(App, {
+  name: "hello Breact!!"
+});
 const container = document.getElementById("app");
 Breact.render(element, container);
